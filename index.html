@@ -662,10 +662,27 @@ function checkMatch(){
   }
 }
 
+// ── SCORE SUBMISSION ─────────────────────────────────────────────────────────
+// Paste your Power Automate HTTP POST URL below (keep the quotes)
+const FLOW_URL = 'PASTE_YOUR_POWER_AUTOMATE_URL_HERE';
+
+function submitScore(elapsed){
+  if(!FLOW_URL||FLOW_URL.startsWith('PASTE'))return; // skip if not configured
+  const payload=JSON.stringify({
+    name:S.name, score:S.matched.size/2,
+    time:elapsed, moves:S.moves, errors:S.errors,
+    lang:S.lang, date:new Date().toISOString()
+  });
+  // sendBeacon: fire-and-forget, no CORS preflight, works even on page unload
+  try{ navigator.sendBeacon(FLOW_URL,payload); }
+  catch(e){ fetch(FLOW_URL,{method:'POST',mode:'no-cors',body:payload}).catch(()=>{}); }
+}
+
 // ── RESULTS SCREEN ────────────────────────────────────────────────────────────
 function renderResults(){
   const t=tr();
   const elapsed=fmt(Date.now()-S.start);
+  submitScore(elapsed);
   const rating=S.errors===0?t.ratingLabels[0]:S.errors<=3?t.ratingLabels[1]:t.ratingLabels[2];
   const pairs=[0,1,2,3,4].map(i=>`
     <div class="pair-card">
